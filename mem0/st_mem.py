@@ -24,7 +24,7 @@ config = {
         "provider": "gemini",
         "config": {
             "api_key": GOOGLE_API_KEY,
-            "model": "gemini-3.1-flash-lite",
+            "model": "gemini-3.5-flash-lite",
         },
     },
     "embedder": {
@@ -125,12 +125,13 @@ if user_query:
         recalled = search_response.get("results", [])
         memories = [memory.get("memory", "") for memory in recalled]
         system_message = f"""You are Rabbit, a warm and helpful AI assistant. Answer politely and clearly.
+        -Note: If user corrects any data or information, you should acknowledge it and update your knowledge memory graph accordingly.
                      Use these relevant memories of the user and give the best answer you can the below are the memories of the user to help you answer the question.
                     - Memories:
                     {json.dumps(memories)}"""
 
         response = client.chat.completions.create(
-            model="gemini-3.1-flash-lite",
+            model="gemini-3.5-flash-lite",
             messages=[
                 {"role": "system", "content": system_message},
                 *st.session_state.messages,
