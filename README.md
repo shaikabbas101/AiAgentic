@@ -12,3 +12,6 @@ source venv/bin/activate
 
 # Deactivate
 deactivate
+
+# Streamlit run cmd
+streamlit run .\mem0\st_mem.py
