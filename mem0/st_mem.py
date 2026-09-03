@@ -26,12 +26,16 @@ def get_secret(name: str):
 
 
 GOOGLE_API_KEY = get_secret("GOOGLE_API_KEY")
+QDRANT_URL = get_secret("QDRANT_URL")
+QDRANT_API_KEY = get_secret("QDRANT_API_KEY")
 required_secrets = {
     "GOOGLE_API_KEY": GOOGLE_API_KEY,
     "NEO4J_URI": get_secret("NEO4J_URI"),
     "NEO4J_USERNAME": get_secret("NEO4J_USERNAME"),
     "NEO4J_PASSWORD": get_secret("NEO4J_PASSWORD"),
     "NEO4J_DATABASE": get_secret("NEO4J_DATABASE"),
+    "QDRANT_URL": get_secret("QDRANT_URL"),
+    "QDRANT_API_KEY": get_secret("QDRANT_API_KEY"),
 }
 missing_secrets = [name for name, value in required_secrets.items() if not value]
 if missing_secrets:
@@ -43,6 +47,28 @@ from openai import OpenAI
 
 warnings.simplefilter("ignore", DeprecationWarning)
 
+# Vector store configuration
+vector_store_config = {
+    "embedding_model_dims": 768,
+    "collection_name": "mem_users",
+}
+
+if QDRANT_URL:
+    vector_store_config.update(
+        {
+            "url": QDRANT_URL,
+            "api_key": QDRANT_API_KEY,
+        }
+    )
+else:
+    vector_store_config.update(
+        {
+            "host": "localhost",
+            "port": 6333,
+        }
+    )
+
+# LLM and Embedder configuration
 config = {
     "version": "v1.1",
     "llm": {
@@ -71,12 +97,7 @@ config = {
     },
     "vector_store": {
         "provider": "qdrant",
-        "config": {
-            "host": "localhost",
-            "port": 6333,
-            "embedding_model_dims": 768,
-            "collection_name": "mem_users",
-        },
+        "config": vector_store_config,
     },
 }
 
