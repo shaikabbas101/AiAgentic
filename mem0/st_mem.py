@@ -110,7 +110,14 @@ def get_clients():
     )
 
 
-memory_client, client = get_clients()
+try:
+    memory_client, client = get_clients()
+except Exception as error:
+    st.error(
+        "Could not initialize Mem0. Check Qdrant Cloud URL/API key and Neo4j "
+        "secrets. Details: " + str(error)
+    )
+    st.stop()
 
 styles_path = Path(__file__).with_name("styles.css")
 st.markdown(
