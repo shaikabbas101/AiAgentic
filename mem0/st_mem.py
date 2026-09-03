@@ -44,7 +44,6 @@ if missing_secrets:
 
 from mem0 import Memory
 from openai import OpenAI
-from qdrant_client import QdrantClient
 
 warnings.simplefilter("ignore", DeprecationWarning)
 
@@ -60,7 +59,7 @@ vector_store_config = {
 if QDRANT_URL:
     vector_store_config.update(
         {
-            "url": QDRANT_URL.rstrip("/"),
+            "url": QDRANT_URL,
             "api_key": QDRANT_API_KEY,
             "timeout": 60,
         }
