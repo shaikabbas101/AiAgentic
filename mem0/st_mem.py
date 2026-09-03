@@ -1,21 +1,46 @@
 import os
 import time
-
-os.environ["MEM0_TELEMETRY"] = "false"
-os.environ["LANGCHAIN_TRACING_V2"] = "false"
-os.environ["LANGCHAIN_API_KEY"] = ""
-
 import json
 import warnings
 from pathlib import Path
 import streamlit as st
 from dotenv import load_dotenv
 
+os.environ["MEM0_TELEMETRY"] = "false"
+os.environ["LANGCHAIN_TRACING_V2"] = "false"
+os.environ["LANGCHAIN_API_KEY"] = ""
+
 load_dotenv()
+
+st.set_page_config(
+    page_title="Rabbit AI",
+    page_icon="🐇",
+    layout="wide",
+    initial_sidebar_state="expanded",
+)
+
+
+def get_secret(name: str):
+    """Read Streamlit Cloud secrets, with .env fallback for local development."""
+    return st.secrets.get(name) or os.getenv(name)
+
+
+GOOGLE_API_KEY = get_secret("GOOGLE_API_KEY")
+required_secrets = {
+    "GOOGLE_API_KEY": GOOGLE_API_KEY,
+    "NEO4J_URI": get_secret("NEO4J_URI"),
+    "NEO4J_USERNAME": get_secret("NEO4J_USERNAME"),
+    "NEO4J_PASSWORD": get_secret("NEO4J_PASSWORD"),
+    "NEO4J_DATABASE": get_secret("NEO4J_DATABASE"),
+}
+missing_secrets = [name for name, value in required_secrets.items() if not value]
+if missing_secrets:
+    st.error("Missing secrets: " + ", ".join(missing_secrets))
+    st.stop()
+
 from mem0 import Memory
 from openai import OpenAI
 
-GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 warnings.simplefilter("ignore", DeprecationWarning)
 
 config = {
@@ -38,10 +63,10 @@ config = {
     "graph_store": {
         "provider": "neo4j",
         "config": {
-            "url": os.getenv("NEO4J_URI"),
-            "username": os.getenv("NEO4J_USERNAME"),
-            "password": os.getenv("NEO4J_PASSWORD"),
-            "database": os.getenv("NEO4J_DATABASE"),
+            "url": get_secret("NEO4J_URI"),
+            "username": get_secret("NEO4J_USERNAME"),
+            "password": get_secret("NEO4J_PASSWORD"),
+            "database": get_secret("NEO4J_DATABASE"),
         },
     },
     "vector_store": {
@@ -65,13 +90,6 @@ def get_clients():
 
 
 memory_client, client = get_clients()
-
-st.set_page_config(
-    page_title="Rabbit AI",
-    page_icon="🐇",
-    layout="wide",
-    initial_sidebar_state="expanded",
-)
 
 styles_path = Path(__file__).with_name("styles.css")
 st.markdown(
