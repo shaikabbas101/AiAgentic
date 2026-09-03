@@ -48,40 +48,33 @@ from qdrant_client import QdrantClient
 
 warnings.simplefilter("ignore", DeprecationWarning)
 
-# Vector store configuration
+# --- REMOVE OR REPLACE YOUR OLD QDRANT CLIENT INITIALIZATION BLOCK WITH THIS ---
+
+# Base vector store configuration for Mem0
 vector_store_config = {
     "embedding_model_dims": 768,
     "collection_name": "mem_users",
 }
 
+# Instead of passing a live client object, pass connection properties to Mem0
 if QDRANT_URL:
-    qdrant_client = QdrantClient(
-        url=QDRANT_URL.rstrip("/"),
-        api_key=QDRANT_API_KEY,
-        timeout=60,
-        prefer_grpc=False,
-        check_compatibility=False,
-    )
     vector_store_config.update(
         {
-            "client": qdrant_client,
+            "url": QDRANT_URL.rstrip("/"),
+            "api_key": QDRANT_API_KEY,
+            "timeout": 60,
         }
     )
 else:
-    qdrant_client = QdrantClient(
-        host="localhost",
-        port=6333,
-        timeout=60,
-        prefer_grpc=False,
-        check_compatibility=False,
-    )
     vector_store_config.update(
         {
-            "client": qdrant_client,
+            "host": "localhost",
+            "port": 6333,
+            "timeout": 60,
         }
     )
 
-# LLM and Embedder configuration
+# The rest of your configuration remains clean and unchanged
 config = {
     "version": "v1.1",
     "llm": {
