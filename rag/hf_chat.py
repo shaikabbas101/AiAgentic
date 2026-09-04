@@ -2,43 +2,59 @@ import os
 from dotenv import load_dotenv
 from langchain_huggingface import HuggingFaceEmbeddings  # Updated import
 from langchain_qdrant import QdrantVectorStore
+
 load_dotenv()  # Load environment variables from .env file
 from openai import OpenAI
+from qdrant_client import QdrantClient
 
 # Client for Google Gemini API initialization from the OpenAI class
 client = OpenAI(
     api_key=os.getenv("GOOGLE_API_KEY"),
-    base_url="https://generativelanguage.googleapis.com/v1beta/openai/"
+    base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
 )
 
 # NEW FREE BGE EMBEDDINGS SYSTEM (Runs locally, automatically handles downloading)
 embedding_model = HuggingFaceEmbeddings(
     model_name="BAAI/bge-small-en-v1.5",
-    model_kwargs={'device': 'cpu'}, # Change to 'cuda' if you have an Nvidia GPU
-    encode_kwargs={'normalize_embeddings': True} # Essential for BGE cosine distance calculation
+    model_kwargs={"device": "cpu"},  # Change to 'cuda' if you have an Nvidia GPU
+    encode_kwargs={
+        "normalize_embeddings": True
+    },  # Essential for BGE cosine distance calculation
 )
 
-# Connect to the new BGE-compatible collection
+qclient = QdrantClient(url="http://localhost:6333")  # Qdrant local server URL
+
 # Note: You must run your ingestion/PDF-parsing script first using this new collection name
-vector_db = QdrantVectorStore.from_existing_collection(
+vector_db = QdrantVectorStore(
     embedding=embedding_model,
-    url="http://localhost:6333",  # Qdrant local server URL
-    collection_name="thesis_hf"  # Re-ingested collection name for 384 dimensions
+    client=qclient,  # Use the Qdrant client for connection
+    collection_name="chess_tactics_hf",  # Re-ingested collection name for 384 dimensions
 )
+
+# without using the Qdrant client,this may load linearly and slowly, but it will work
+# vector_db = QdrantVectorStore.from_existing_collection(
+#     embedding=embedding_model,
+#     url="http://localhost:6333",  # Qdrant local server URL
+#     collection_name="chess_tactics_hf",  # Re-ingested collection name for 384 dimensions
+# )
 
 while True:
     # Take the user input and query the vector store
     user_input = input("Ask Something: ")
-    if user_input.strip().lower() in ['exit', 'quit']:
+    if user_input.strip().lower() in ["exit", "quit"]:
         break
 
     # Relevant chunks from the vector db
-    search_results = vector_db.similarity_search(user_input) # k is the number of relevant chunks to retrieve
+    search_results = vector_db.similarity_search(
+        user_input
+    )  # k is the number of relevant chunks to retrieve
 
-    context = "\n\n\n".join([
-        f"Page Content:{result.page_content}\nPage Number: {result.metadata.get('page_label', 'N/A')}\nFile Location: {result.metadata.get('source', 'N/A')}"
-        for result in search_results
-    ])
+    context = "\n\n\n".join(
+        [
+            f"Page Content:{result.page_content}\nPage Number: {result.metadata.get('page_label', 'N/A')}\nFile Location: {result.metadata.get('source', 'N/A')}"
+            for result in search_results
+        ]
+    )
 
     SYSTEM_PROMPT = f"""You are a helpful assistant who answers questions based on the available context
     retrieved from a PDF file along with page contents and page numbers.
@@ -54,8 +70,8 @@ while True:
         model="gemini-3.1-flash-lite",
         messages=[
             {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "user", "content": user_input}
-        ]
+            {"role": "user", "content": user_input},
+        ],
     )
 
     print(f"🤖: {response.choices[0].message.content}\n")
