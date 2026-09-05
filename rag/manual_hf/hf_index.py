@@ -8,7 +8,7 @@ from langchain_qdrant import QdrantVectorStore
 
 load_dotenv()  # Load environment variables from .env file
 
-pdf_path = Path(__file__).parent / "tactics_course.pdf"
+pdf_path = Path(__file__).parent / "final_thesis.pdf"  # Path to your PDF file
 
 # Load this file using the PyPDFLoader
 loader = PyPDFLoader(file_path=pdf_path)
@@ -29,12 +29,12 @@ embeddings = HuggingFaceEmbeddings(
 
 # VECTOR STORE
 vector_store = QdrantVectorStore.from_documents(
-    # url=os.environ["QDRANT_URL"], # for Qdrant URL cloud
-    # api_key=os.environ["QDRANT_API_KEY"], # For cloud Qdrant API key
+    url=os.environ["QDRANT_URL"],  # for Qdrant URL cloud
+    api_key=os.environ["QDRANT_API_KEY"],  # For cloud Qdrant API key
     documents=chunks,
     embedding=embeddings,
-    url="http://localhost:6333",  # Qdrant local server URL
-    collection_name="chess_tactics_hf",  # Name of the collection in Qdrant
+    # url="http://localhost:6333",  # Qdrant local server URL
+    collection_name="thesis_hf_cloud",  # Name of the collection in Qdrant
 )
 
 print("✅ Vector store created successfully with BGE embeddings and Qdrant.")

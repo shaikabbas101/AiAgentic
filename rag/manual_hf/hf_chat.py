@@ -22,13 +22,18 @@ embedding_model = HuggingFaceEmbeddings(
     },  # Essential for BGE cosine distance calculation
 )
 
-qclient = QdrantClient(url="http://localhost:6333")  # Qdrant local server URL
+qclient = QdrantClient(
+    # url="http://localhost:6333",
+    url=os.environ["QDRANT_URL"],
+    api_key=os.environ["QDRANT_API_KEY"],
+    check_compatibility=False,
+)  # Qdrant local server URL
 
 # Note: You must run your ingestion/PDF-parsing script first using this new collection name
 vector_db = QdrantVectorStore(
     embedding=embedding_model,
     client=qclient,  # Use the Qdrant client for connection
-    collection_name="chess_tactics_hf",  # Re-ingested collection name for 384 dimensions
+    collection_name="thesis_hf_cloud",  # Re-ingested collection name for 384 dimensions
 )
 
 # without using the Qdrant client,this may load linearly and slowly, but it will work
